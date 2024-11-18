@@ -73,7 +73,7 @@ LTE-Drone-Communication/
 1. **리포지토리 클론**:
 
    ```bash
-   git clone https://github.com/yourusername/LTE-Drone-Communication.git
+   git clone https://github.com/LeeMyungwoon/LTE-Drone-Communication.git
    cd LTE-Drone-Communication
    ```
 
@@ -96,7 +96,7 @@ LTE-Drone-Communication/
 1. **리포지토리 클론**:
 
    ```bash
-   git clone https://github.com/yourusername/LTE-Drone-Communication.git
+   git clone https://github.com/LeeMyungwoon/LTE-Drone-Communication.git
    cd LTE-Drone-Communication
    ```
 
@@ -196,29 +196,9 @@ LTE-Drone-Communication/
 
 ## 기여하기
 
-기여는 언제나 환영합니다! 기여하려면:
+기여는 언제나 환영합니다! :
 
-1. **리포지토리 포크**: 프로젝트의 포크를 생성합니다.
-
-2. **기능 브랜치 생성**:
-
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-
-3. **변경 사항 커밋**:
-
-   ```bash
-   git commit -am 'Add new feature'
-   ```
-
-4. **브랜치에 푸시**:
-
-   ```bash
-   git push origin feature/YourFeature
-   ```
-
-5. **풀 리퀘스트 열기**: 변경 사항을 검토하도록 제출합니다.
+개선이나 새로운 기능에 대한 제안이 있으면 이슈나 풀 리퀘스트를 제출해 주세요.
 
 ## 라이선스
 
