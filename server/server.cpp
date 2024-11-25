@@ -9,16 +9,18 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include "common/mavlink.h"  // MAVLink 헤더 파일 포함
+#include "../c_library_v2/common/mavlink.h"  // MAVLink 헤더 파일 포함
 #include <vector>
 #include <unordered_map>
 #include <map>
 #include <chrono>
 #include <climits>
 #include <csignal>
+#include <cstdlib> // For atoi
+#include <string>
 
 // 포트 번호는 65535 이하로 수정
-#define PORT 54321
+// #define PORT 54321 // Removed to use a variable instead
 #define BUFFER_SIZE 1024
 #define TIMEOUT -1
 #define MAX_EVENTS 100
@@ -209,7 +211,7 @@ void forward_message_to_drone(std::unordered_map<int, ClientInfo> &clients, mavl
             break;
         }
 
-        // 파리미터 설정 메시지
+        // 파라미터 설정 메시지
         case MAVLINK_MSG_ID_PARAM_SET: {
             mavlink_param_set_t param_set;
             mavlink_msg_param_set_decode(&msg, &param_set);
@@ -323,7 +325,7 @@ void forward_message_to_drone(std::unordered_map<int, ClientInfo> &clients, mavl
                 break; // 대상 드론을 찾았으므로 루프 종료
             }
         }
-    } else {    // 코드 한번더 작성 
+    } else {    
         // target_system이 0인 경우 모든 드론에게 전달
         for (auto &pair : clients) {
             ClientInfo &client = pair.second;
@@ -442,14 +444,45 @@ void handle_client_data(int kq, std::unordered_map<int, ClientInfo> &clients, in
     }
 }
 
-int main() {
+// 사용법을 출력하는 함수
+void printUsage(const std::string &progName) {
+    std::cout << "Usage: " << progName << " [port]" << std::endl;
+    std::cout << "port: Server port number (1-65535). Default is 54321." << std::endl;
+    std::cout << "-h, --help : Show this help message" << std::endl;
+}
+
+int main(int argc, char* argv[]) {
     // SIGINT 핸들러 등록
     std::signal(SIGINT, signal_handler);
 
-    int server_sock = create_server_socket(PORT);
+    int port = 54321; // Default Port Number
+
+    // 명령줄 인수 처리
+    if (argc > 1) {
+        std::string arg = argv[1];
+        if (arg == "-h" || arg == "--help") {
+            printUsage(argv[0]);
+            return 0;
+        } else {
+            // 포트번호 유효성 검사
+            port = std::atoi(argv[1]);
+            if (port <= 0 || port > 65535) {
+                std::cerr << "Error: Invalid port number '" << argv[1] << "'. Please provide a port between 1 and 65535." << std::endl;
+                printUsage(argv[0]);
+                return -1;
+            }
+        }
+    } else {
+        std::cout << "No port specified. Using default port " << port << "." << std::endl;
+    } 
+
+    std::cout << "Starting server with the following settings:" << std::endl;
+    std::cout << "\tServer Port  : " << port << std::endl;
+
+    int server_sock = create_server_socket(port);
     if (server_sock == -1) return -1;
 
-    std::cout << "Server is listening on port " << PORT << std::endl;
+    std::cout << "Server is listening on port " << port << std::endl;
 
     // kqueue 인스턴스 생성
     int kq = kqueue();
@@ -475,6 +508,10 @@ int main() {
     while (running) {
         int nfds = kevent(kq, NULL, 0, events, MAX_EVENTS, NULL);
         if (nfds == -1) {
+            if (errno == EINTR) {
+                // Interrupted by signal, continue to check running flag
+                continue;
+            }
             perror("kevent failed");
             break;
         }

@@ -8,10 +8,9 @@
 #include <netinet/in.h>
 #include <termios.h>
 #include <errno.h>
-#include "common/mavlink.h"
+#include "../c_library_v2/common/mavlink.h"
 
-// 포트 번호 및 기타 상수 정의
-#define SERVER_PORT 54321
+// 상수 정의
 #define BUFFER_SIZE 1024
 #define MAX_EVENTS 10
 #define TIMEOUT -1
@@ -27,21 +26,72 @@ int connect_to_server(const std::string& serverIP, int port);
 void close_socket(int& sockfd);
 void handle_serial_data(int serial_fd, int sockfd, uint8_t& system_id);
 void handle_socket_data(int sockfd, int serial_fd, uint8_t system_id);
+void printUsage();
 
-int main() {
-    std::string serialDevice = "/dev/ttyAMA0";
-    int baudRate = 57600;
-    std::string serverIP = "192.168.219.117";
+// 명령줄 인자 처리 함수
+void printUsage() {
+    std::cout << "Usage: ./relay_client [options]" << std::endl;
+    std::cout << "Options:" << std::endl;
+    std::cout << "\t--serial <device>   : Serial port device path  (default: /dev/ttyAMA0)" << std::endl;
+    std::cout << "\t--baud <rate>       : Baud rate                (default: 57600)" << std::endl;
+    std::cout << "\t--ip <server_ip>    : Server IP address        (default: 192.168.219.117)" << std::endl;
+    std::cout << "\t--port <port>       : Server port number       (default: 54321, 1-65535)" << std::endl;
+    std::cout << "\t-h, --help          : Show this help message" << std::endl;
+}
+
+int main(int argc, char *argv[]) {
+    // 기본 설정값
+    std::string serialDevice = "/dev/ttyAMA0";  // 기본 시리얼 포트 경로
+    int baudRate = 57600;                       // 기본 baud rate
+    std::string serverIP = "192.168.219.117";   // 기본 서버 IP
+    int port = 54321;                           // 기본 서버 포트
+
+    // 명령줄 인수 처리
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--serial" && i + 1 < argc) {
+            serialDevice = argv[++i];
+        } else if (arg == "--baud" && i + 1 < argc) {
+            baudRate = std::atoi(argv[++i]);
+            if (baudRate <= 0) {
+                std::cerr << "Error: Invalid baud rate '" << argv[i] << "'." << std::endl;
+                printUsage();
+                return -1;
+            }
+        } else if (arg == "--ip" && i + 1 < argc) {
+            serverIP = argv[++i];
+        } else if (arg == "--port" && i + 1 < argc) {
+            port = std::atoi(argv[++i]);
+            if (port <= 0 || port > 65535) {
+                std::cerr << "Error: Invalid port number '" << argv[i] << "'." << std::endl;
+                printUsage();
+                return -1;
+            }
+        } else if (arg == "-h" || arg == "--help") {
+            printUsage();
+            return 0;
+        } else {
+            std::cerr << "Error: Unknown option '" << arg << "'." << std::endl;
+            printUsage();
+            return -1;
+        }
+    }
+
+    std::cout << "Starting client with the following settings:" << std::endl;
+    std::cout << "\tSerial Device: " << serialDevice << std::endl;
+    std::cout << "\tBaud Rate    : " << baudRate << std::endl;
+    std::cout << "\tserver IP    : " << serverIP << std::endl;
+    std::cout << "\tserver port  : " << port << std::endl;
 
     int serial_fd = open_serial_port(serialDevice, baudRate);
     if (serial_fd < 0) {
-        std::cerr << "Failed to open serial port" << std::endl;
+        std::cerr << "Error: Failed to start the client." << std::endl;
         return -1;
     }
 
-    int sockfd = connect_to_server(serverIP, SERVER_PORT);
+    int sockfd = connect_to_server(serverIP, port);
     if (sockfd < 0) {
-        std::cerr << "Failed to connect to server" << std::endl;
+        std::cerr << "Error: Failed to connected with client." << std::endl;
         close(serial_fd);
         return -1;
     }
@@ -246,7 +296,7 @@ void handle_serial_data(int serial_fd, int sockfd, uint8_t& system_id) {
                     // 드론의 시스템 ID 설정 (최초 수신 시)
                     if (system_id == 0) {
                         system_id = msg.sysid;
-                        std::cout << "Drone System ID set to " << (int)system_id << std::endl;
+                        std::cout << "Drone System ID set to " << static_cast<int>(system_id) << "으로 설정되었습니다" << std::endl;
                     }
 
                     // 메시지를 직렬화하여 서버로 전송
