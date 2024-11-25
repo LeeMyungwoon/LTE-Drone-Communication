@@ -130,6 +130,12 @@ LTE-Drone-Communication/
 
 ### 사용법
 
+프로그램 실행 시 명령줄 인자를 통해 동작을 제어할 수 있습니다:
+
+```bash
+./프로그램 --옵션 [값]
+```
+
 #### 지상통제소 (GCS)
 
 - **소프트웨어**: [QGroundControl](http://qgroundcontrol.com/) 또는 MAVLink 호환 GCS 사용.
@@ -193,7 +199,7 @@ LTE-Drone-Communication/
 ## 개발자 정보
 
 - **개발자**: 이명운
-- **버전**: 1.0.1
+- **버전**: 1.1.0
 
 ## 기여하기
 
